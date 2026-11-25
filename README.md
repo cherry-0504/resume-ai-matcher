@@ -1,178 +1,96 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI 简历诊断与岗位匹配助手 V1.0</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
-  <div class="max-w-5xl mx-auto px-4 py-10">
-    <div class="mb-8 text-center">
-      <span class="inline-block px-3 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full mb-2">
-        毕设 & 求职作品集 V1.0
-      </span>
-      <h1 class="text-3xl font-bold text-slate-900">基于 LLM 的智能简历诊断与岗位匹配助手</h1>
-      <p class="text-slate-500 mt-2">上传 PDF 简历并粘贴岗位 JD，快速定位匹配差距与 STAR 润色建议</p >
-    </div>
+# AI 简历诊断与岗位匹配助手
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-2">1. 上传 PDF 简历</label>
-        <input
-          id="resumeFile"
-          type="file"
-          accept=".pdf"
-          class="block w-full text-sm text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-        />
-      </div>
+基于 **FastAPI**、**PyMuPDF**、**HTML / Tailwind CSS** 与 **OpenAI 兼容大模型接口（硅基流动 `Qwen/Qwen2.5-7B-Instruct`）** 开发的简历诊断与人岗匹配工具。用户上传 PDF 格式简历并粘贴目标岗位 JD 后，系统自动提取简历文本并调用大模型分析，生成岗位匹配度评分、整体评价、已命中优势技能、建议补齐关键词以及针对性修改与润色建议。
 
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-2">2. 粘贴目标岗位 JD</label>
-        <textarea
-          id="jdText"
-          rows="6"
-          placeholder="例如：熟悉 Python 或前后端开发，了解数据库与接口开发，有项目经验者优先..."
-          class="w-full rounded-xl border border-slate-300 p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        ></textarea>
-      </div>
+---
 
-      <div class="flex justify-end">
-        <button
-          id="submitBtn"
-          onclick="handleAnalyze()"
-          class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition cursor-pointer disabled:opacity-50"
-        >
-          开始智能诊断
-        </button>
-      </div>
-    </div>
+## 一、项目背景与定位
 
-    <div id="errorBox" class="hidden mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"></div>
-    <div id="resultArea" class="hidden mt-8 space-y-6"></div>
-  </div>
+在求职投递过程中，同一份简历面对不同岗位的 JD 时，往往存在关键词匹配度不足、核心优势不够突出或项目表达偏流水账等问题。本项目旨在通过轻量级前后端架构与大模型能力，帮助求职者快速定位简历与目标岗位的差距，并提供可落地的修改参考。
 
-  <script>
-    async function handleAnalyze() {
-      const fileInput = document.getElementById("resumeFile");
-      const jdInput = document.getElementById("jdText");
-      const btn = document.getElementById("submitBtn");
-      const errorBox = document.getElementById("errorBox");
-      const resultArea = document.getElementById("resultArea");
+---
 
-      errorBox.classList.add("hidden");
-      resultArea.classList.add("hidden");
+## 二、核心功能
 
-      if (!fileInput.files.length) {
-        showError("请先选择一份 PDF 简历文件。");
-        return;
-      }
-      if (!jdInput.value.trim()) {
-        showError("请先输入目标岗位的 JD 内容。");
-        return;
-      }
+* **PDF 简历解析**：基于 `PyMuPDF` 提取 PDF 简历中的文本内容，作为后续分析输入。
+* **人岗匹配评估**：结合目标岗位 JD 输出匹配度评分、候选人综合评价、已命中优势技能与建议补齐关键词。
+* **针对性润色建议**：针对薄弱环节给出修改方向与可参考的润色表达示例。
+* **轻量 Web 交互**：后端采用 `FastAPI` 提供接口，前端使用 `HTML` 与 `Tailwind CSS` 展示诊断结果。
 
-      const formData = new FormData();
-      formData.append("resume_file", fileInput.files[0]);
-      formData.append("jd_text", jdInput.value.trim());
+---
 
-      btn.disabled = true;
-      btn.textContent = "正在分析中，请稍候...";
+## 三、技术栈
 
-      try {
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          body: formData,
-        });
-        const payload = await res.json();
-        if (!res.ok) {
-          throw new Error(payload.detail || "请求失败");
-        }
-        renderResult(payload);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "开始智能诊断";
-      }
-    }
+| 模块 | 技术选型 | 说明 |
+| :--- | :--- | :--- |
+| **后端框架** | FastAPI + Uvicorn | 提供 Web 服务与诊断接口 |
+| **文档解析** | PyMuPDF | 解析上传的 PDF 简历文本 |
+| **大模型调用** | OpenAI SDK + 硅基流动 API | 使用 `Qwen/Qwen2.5-7B-Instruct` 生成诊断与润色建议 |
+| **环境配置** | python-dotenv | 从 `.env` 读取 API Key 与接口地址 |
+| **前端界面** | HTML + Tailwind CSS | 表单输入与匹配结果可视化展示 |
 
-    function showError(msg) {
-      const errorBox = document.getElementById("errorBox");
-      errorBox.textContent = msg;
-      errorBox.classList.remove("hidden");
-    }
+---
 
-    function renderResult(payload) {
-      const resultArea = document.getElementById("resultArea");
-      resultArea.classList.remove("hidden");
+## 四、系统实现流程
 
-      if (payload.status === "raw_text") {
-        resultArea.innerHTML = `
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-bold mb-3">${escapeHtml(payload.message)}</h2>
-            <pre class="whitespace-pre-wrap text-sm text-slate-700 bg-slate-50 p-4 rounded-xl">${escapeHtml(payload.raw_content)}</pre>
-          </div>
-        `;
-        return;
-      }
+上传 PDF 简历与输入岗位 JD → 后端解析 PDF 文本 → 拼接 Prompt 调用大模型接口 → 结构化返回匹配分数、关键词与润色建议 → 前端页面展示诊断结果
 
-      const d = payload.data;
-      const matchedHtml = (d.matched_skills || [])
-        .map(s => `<span class="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">${escapeHtml(s)}</span>`)
-        .join("");
-      const missingHtml = (d.missing_skills || [])
-        .map(s => `<span class="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">${escapeHtml(s)}</span>`)
-        .join("");
+---
 
-      const suggestionsHtml = (d.suggestions || [])
-        .map((item, idx) => `
-          <div class="border border-slate-200 rounded-xl p-4 space-y-2 bg-slate-50/60">
-            <div class="text-xs font-semibold text-indigo-600 uppercase">建议 ${idx + 1} · ${escapeHtml(item.section || "")}</div>
-            <div class="text-sm text-slate-700"><span class="font-semibold">问题：</span>${escapeHtml(item.issue || "")}</div>
-            <div class="text-sm text-slate-800 bg-white p-3 rounded-lg border border-slate-200">
-              <span class="font-semibold text-emerald-700">润色参考：</span>${escapeHtml(item.rewrite_example || "")}
-            </div>
-          </div>
-        `)
-        .join("");
+## 五、目录结构与配置说明
 
-      resultArea.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
-            <div>
-              <div class="text-sm text-slate-500">岗位匹配度评估</div>
-              <div class="text-4xl font-extrabold text-indigo-600 mt-1">${escapeHtml(String(d.match_score ?? "--"))} <span class="text-lg font-normal text-slate-400">/ 100</span></div>
-            </div>
-            <p class="text-sm text-slate-700 max-w-2xl bg-indigo-50/70 p-4 rounded-xl">${escapeHtml(d.summary || "")}</p >
-          </div>
+```text
+resume-ai-matcher/
+├── .env.example          # 环境变量模板（不含真实密钥，本地需复制为 .env）
+├── assets/
+│   └── demo-result.png   # 系统运行与诊断结果演示截图
+├── backend/
+│   └── main.py           # FastAPI 后端、PDF 解析与大模型分析逻辑
+└── frontend/
+    └── index.html        # 前端交互与诊断结果展示页面
+```
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 class="text-sm font-semibold text-slate-700 mb-2.5">已命中优势技能</h3>
-              <div class="flex flex-wrap gap-2">${matchedHtml || '<span class="text-xs text-slate-400">暂无</span>'}</div>
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold text-slate-700 mb-2.5">建议补齐/突出关键词</h3>
-              <div class="flex flex-wrap gap-2">${missingHtml || '<span class="text-xs text-slate-400">暂无</span>'}</div>
-            </div>
-          </div>
+> 注意：仓库中仅提供 `.env.example` 模板，真实的 `.env` 密钥与本地 `venv/` 虚拟环境不会上传至代码仓库。
 
-          <div>
-            <h3 class="text-base font-bold text-slate-900 mb-3">针对性修改与润色建议</h3>
-            <div class="space-y-3">${suggestionsHtml}</div>
-          </div>
-        </div>
-      `;
-    }
+---
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-  </script>
-</body>
-</html>
+## 六、项目演示与本地运行
+
+本项目当前为本地启动运行的 Web 应用，可通过以下步骤快速完成本地演示：
+
+1. **创建虚拟环境并安装依赖**
+   在本地终端进入 `backend` 目录执行：
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\activate
+   pip install fastapi uvicorn pymupdf openai python-multipart python-dotenv
+   ```
+
+2. **配置环境变量**
+   将项目根目录的 `.env.example` 复制一份并重命名为 `.env`，填入你的硅基流动 API Key 与接口配置：
+   ```env
+   OPENAI_API_KEY=your_siliconflow_api_key_here
+   OPENAI_BASE_URL=[https://api.siliconflow.cn/v1](https://api.siliconflow.cn/v1)
+   MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
+   ```
+
+3. **启动服务并打开页面**
+   在 `backend` 目录下运行：
+   ```bash
+   uvicorn main:app --reload
+   ```
+   服务启动后，打开浏览器访问 `http://127.0.0.1:8000`，上传测试 PDF 简历并填入目标岗位 JD，点击“开始智能诊断”即可查看分析结果。
+
+---
+
+## 七、系统运行截图
+
+![简历诊断与岗位匹配结果演示](assets/demo-result.png)
+
+---
+
+## 八、后续扩展方向
+
+* 接入 **SQLite** 保存历史诊断记录，支持对比不同版本简历的匹配分数变化。
+* 增加一键复制润色建议或导出诊断报告功能。
+* 进一步细化 JD 技能权重拆解与多岗位批量对比能力。

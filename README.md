@@ -85,7 +85,10 @@ resume-ai-matcher/
 
 ## 七、系统运行截图
 
-![简历诊断与岗位匹配结果演示](assets/demo-result.png)
+<img width="959" height="502" alt="demo2" src="https://github.com/user-attachments/assets/b7d95913-d61d-45bd-a5a5-159b78c4ce2a" />
+<img width="959" height="502" alt="demo1" src="https://github.com/user-attachments/assets/f5cb9cd8-6da5-45c8-895a-4293492d3145" />
+
+
 
 ---
 
